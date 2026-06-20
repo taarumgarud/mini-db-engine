@@ -8,7 +8,7 @@ void print_prompt() {
 }
 
 int main() {
-    Table* table = new_table();
+    Table* table = db_open("database.db");
     std::string input_buffer;
 
     while (true) {
@@ -23,7 +23,7 @@ int main() {
 
         if (input_buffer.find(".") == 0) {
             if (input_buffer == ".exit") {
-                free_table(table);
+                db_close(table);
                 break;
             } else {
                 std::cout << "Unrecognized command '" << input_buffer << "'.\n";

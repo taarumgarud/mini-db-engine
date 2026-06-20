@@ -1,5 +1,7 @@
 #pragma once
 #include <cstdint>
+#include <fstream>
+#include <string>
 #include "statement.h"
 
 constexpr uint32_t PAGE_SIZE = 4096;
@@ -9,6 +11,8 @@ constexpr uint32_t ROWS_PER_PAGE = PAGE_SIZE / ROW_SIZE;
 constexpr uint32_t TABLE_MAX_ROWS = ROWS_PER_PAGE * MAX_PAGES;
 
 struct Pager {
+    std::fstream file;
+    uint32_t file_length;
     void* pages[MAX_PAGES];
 };
 
@@ -22,8 +26,9 @@ enum class ExecuteResult {
     EXECUTE_TABLE_FULL
 };
 
-Table* new_table();
-void free_table(Table* table);
+Table* db_open(const std::string& filename);
+void db_close(Table* table);
+void* get_page(Pager* pager, uint32_t page_num);
 void* row_slot(Table* table, uint32_t row_num);
 ExecuteResult execute_insert(Statement* statement, Table* table);
 ExecuteResult execute_select(Statement* statement, Table* table);
