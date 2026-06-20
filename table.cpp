@@ -1,5 +1,6 @@
 #include "table.h"
 #include <cstdlib>
+#include <cstring>
 
 Table* db_open(const std::string& filename) {
     Pager* pager = new Pager;
@@ -23,6 +24,18 @@ Table* db_open(const std::string& filename) {
     Table* table = new Table;
     table->pager = pager;
     table->num_rows = pager->file_length / ROW_SIZE;
+    
+    table->index = new BTree;
+    init_tree(table->index);
+    
+    for (uint32_t i = 0; i < table->num_rows; i++) {
+        void* slot = row_slot(table, i);
+        Row row;
+        std::memcpy(&row, slot, ROW_SIZE);
+        if (row.is_deleted == 0) {
+            btree_insert(table->index, row.id, i);
+        }
+    }
 
     return table;
 }
@@ -61,6 +74,7 @@ void db_close(Table* table) {
 
     pager->file.close();
     delete pager;
+    delete table->index;
     delete table;
 }
 

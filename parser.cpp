@@ -42,19 +42,26 @@ PrepareResult prepare_delete(const std::string& input, Statement& statement) {
         return PrepareResult::PREPARE_SYNTAX_ERROR;
     }
 
-    statement.delete_id = id;
+    statement.target_id = id;
     return PrepareResult::PREPARE_SUCCESS;
 }
 
 PrepareResult prepare_statement(const std::string& input, Statement& statement) {
-    if (input.find("INSERT")==0) {
+    if (input.find("INSERT") == 0) {
         return prepare_insert(input, statement);
     }
-    if (input.find("SELECT")==0) {
-        statement.type = StatementType::STATEMENT_SELECT;
+    if (input.find("SELECT") == 0) {
+        if (input.find("WHERE id =") != std::string::npos) {
+            statement.type = StatementType::STATEMENT_SELECT_BY_ID;
+            int id;
+            sscanf(input.c_str(), "SELECT * FROM users WHERE id = %d", &id);
+            statement.target_id = id;
+        } else {
+            statement.type = StatementType::STATEMENT_SELECT;
+        }
         return PrepareResult::PREPARE_SUCCESS;
     }
-    if (input.find("DELETE")==0) {
+    if (input.find("DELETE") == 0) {
         return prepare_delete(input, statement);
     }
 

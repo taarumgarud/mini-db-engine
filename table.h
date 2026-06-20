@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include "statement.h"
+#include "btree.h"
 
 constexpr uint32_t PAGE_SIZE = 4096;
 constexpr uint32_t MAX_PAGES = 100;
@@ -19,6 +20,7 @@ struct Pager {
 struct Table {
     uint32_t num_rows;
     Pager* pager;
+    BTree* index;
 };
 
 Table* db_open(const std::string& filename);

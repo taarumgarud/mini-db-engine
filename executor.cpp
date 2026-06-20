@@ -13,6 +13,8 @@ ExecuteResult execute_insert(Statement* statement, Table* table) {
     void* destination = row_slot(table, table->num_rows);
     std::memcpy(destination, row_to_insert, ROW_SIZE);
     
+    btree_insert(table->index, row_to_insert->id, table->num_rows);
+    
     table->num_rows++;
     return ExecuteResult::EXECUTE_SUCCESS;
 }
@@ -30,14 +32,62 @@ ExecuteResult execute_select(Statement* statement, Table* table) {
     return ExecuteResult::EXECUTE_SUCCESS;
 }
 
+ExecuteResult execute_select_by_id(Statement* statement, Table* table) {
+    bool found;
+    uint32_t row_num = btree_search(table->index, statement->target_id, found);
+    
+    if (!found) {
+        std::cout << "Error: Record not found.\n";
+        return ExecuteResult::EXECUTE_SUCCESS;
+    }
+    
+    void* source = row_slot(table, row_num);
+    Row row;
+    std::memcpy(&row, source, ROW_SIZE);
+    
+    if (row.is_deleted == 1) {
+        std::cout << "Error: Record not found.\n";
+    } else {
+        std::cout << "(" << row.id << ", " << row.username << ", " << row.email << ")\n";
+    }
+    
+    return ExecuteResult::EXECUTE_SUCCESS;
+}
+
+ExecuteResult execute_delete(Statement* statement, Table* table) {
+    bool found;
+    uint32_t row_num = btree_search(table->index, statement->target_id, found);
+    
+    if (!found) {
+        std::cout << "Error: Record not found.\n";
+        return ExecuteResult::EXECUTE_SUCCESS;
+    }
+    
+    void* slot = row_slot(table, row_num);
+    Row row;
+    std::memcpy(&row, slot, ROW_SIZE);
+    
+    if (row.is_deleted == 1) {
+        std::cout << "Error: Record not found.\n";
+        return ExecuteResult::EXECUTE_SUCCESS;
+    }
+    
+    row.is_deleted = 1;
+    std::memcpy(slot, &row, ROW_SIZE);
+    
+    return ExecuteResult::EXECUTE_SUCCESS;
+}
+
 ExecuteResult execute_statement(Statement* statement, Table* table) {
     switch (statement->type) {
         case StatementType::STATEMENT_INSERT:
             return execute_insert(statement, table);
         case StatementType::STATEMENT_SELECT:
             return execute_select(statement, table);
+        case StatementType::STATEMENT_SELECT_BY_ID:
+            return execute_select_by_id(statement, table);
         case StatementType::STATEMENT_DELETE:
-            return ExecuteResult::EXECUTE_SUCCESS;
+            return execute_delete(statement, table);
     }
     return ExecuteResult::EXECUTE_SUCCESS;
 }

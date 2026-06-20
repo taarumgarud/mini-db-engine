@@ -14,13 +14,14 @@ struct Row {
 enum class StatementType {
     STATEMENT_INSERT,
     STATEMENT_SELECT,
+    STATEMENT_SELECT_BY_ID,
     STATEMENT_DELETE
 };
 
 struct Statement {
     StatementType type;
     Row row_to_insert;
-    uint32_t delete_id;
+    uint32_t target_id;
 };
 
 enum class PrepareResult {
