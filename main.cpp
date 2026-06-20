@@ -2,6 +2,7 @@
 #include <string>
 #include "parser.h"
 #include "table.h"
+#include "executor.h"
 
 void print_prompt() {
     std::cout << "db > ";

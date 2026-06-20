@@ -21,15 +21,7 @@ struct Table {
     Pager* pager;
 };
 
-enum class ExecuteResult {
-    EXECUTE_SUCCESS,
-    EXECUTE_TABLE_FULL
-};
-
 Table* db_open(const std::string& filename);
 void db_close(Table* table);
 void* get_page(Pager* pager, uint32_t page_num);
 void* row_slot(Table* table, uint32_t row_num);
-ExecuteResult execute_insert(Statement* statement, Table* table);
-ExecuteResult execute_select(Statement* statement, Table* table);
-ExecuteResult execute_statement(Statement* statement, Table* table);
