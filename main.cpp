@@ -1,12 +1,14 @@
 #include <iostream>
 #include <string>
 #include "parser.h"
+#include "table.h"
 
 void print_prompt() {
     std::cout << "db > ";
 }
 
 int main() {
+    Table* table = new_table();
     std::string input_buffer;
 
     while (true) {
@@ -19,8 +21,9 @@ int main() {
             continue;
         }
 
-        if (input_buffer.find(".")==0) {
+        if (input_buffer.find(".") == 0) {
             if (input_buffer == ".exit") {
+                free_table(table);
                 break;
             } else {
                 std::cout << "Unrecognized command '" << input_buffer << "'.\n";
@@ -31,25 +34,21 @@ int main() {
         Statement statement;
         PrepareResult result = prepare_statement(input_buffer, statement);
 
-        switch (result) {
-            case PrepareResult::PREPARE_SUCCESS:
-                std::cout << "Parsed successfully.\n";
-                if (statement.type == StatementType::STATEMENT_INSERT) {
-                    std::cout << "Action: INSERT, ID: " << statement.row_to_insert.id 
-                              << ", User: " << statement.row_to_insert.username 
-                              << ", Email: " << statement.row_to_insert.email << "\n";
-                } else if (statement.type == StatementType::STATEMENT_SELECT) {
-                    std::cout << "Action: SELECT\n";
-                } else if (statement.type == StatementType::STATEMENT_DELETE) {
-                    std::cout << "Action: DELETE, ID: " << statement.delete_id << "\n";
-                }
-                break;
-            case PrepareResult::PREPARE_SYNTAX_ERROR:
+        if (result != PrepareResult::PREPARE_SUCCESS) {
+            if (result == PrepareResult::PREPARE_SYNTAX_ERROR) {
                 std::cout << "Syntax error. Could not parse statement.\n";
-                break;
-            case PrepareResult::PREPARE_UNRECOGNIZED_STATEMENT:
+            } else if (result == PrepareResult::PREPARE_UNRECOGNIZED_STATEMENT) {
                 std::cout << "Unrecognized keyword at start of '" << input_buffer << "'.\n";
-                break;
+            }
+            continue;
+        }
+
+        ExecuteResult execute_result = execute_statement(&statement, table);
+
+        if (execute_result == ExecuteResult::EXECUTE_SUCCESS) {
+            std::cout << "Executed.\n";
+        } else if (execute_result == ExecuteResult::EXECUTE_TABLE_FULL) {
+            std::cout << "Error: Table full.\n";
         }
     }
 
