@@ -8,6 +8,18 @@ ExecuteResult execute_insert(Statement* statement, Table* table) {
     }
     
     Row* row_to_insert = &(statement->row_to_insert);
+    
+    bool found;
+    uint32_t row_num = btree_search(table->index, row_to_insert->id, found);
+    if (found) {
+        void* slot = row_slot(table, row_num);
+        Row existing_row;
+        std::memcpy(&existing_row, slot, ROW_SIZE);
+        if (existing_row.is_deleted == 0) {
+            return ExecuteResult::EXECUTE_DUPLICATE_KEY;
+        }
+    }
+    
     row_to_insert->is_deleted = 0;
     
     void* destination = row_slot(table, table->num_rows);

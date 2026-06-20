@@ -40,6 +40,8 @@ int main() {
                 std::cout << "Syntax error. Could not parse statement.\n";
             } else if (result == PrepareResult::PREPARE_UNRECOGNIZED_STATEMENT) {
                 std::cout << "Unrecognized keyword at start of '" << input_buffer << "'.\n";
+            } else if (result == PrepareResult::PREPARE_STRING_TOO_LONG) {
+                std::cout << "String is too long.\n";
             }
             continue;
         }
@@ -50,6 +52,8 @@ int main() {
             std::cout << "Executed.\n";
         } else if (execute_result == ExecuteResult::EXECUTE_TABLE_FULL) {
             std::cout << "Error: Table full.\n";
+        } else if (execute_result == ExecuteResult::EXECUTE_DUPLICATE_KEY) {
+            std::cout << "Error: Duplicate key.\n";
         }
     }
 

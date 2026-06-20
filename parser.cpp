@@ -8,10 +8,10 @@ PrepareResult prepare_insert(const std::string& input, Statement& statement) {
     
     char keyword_insert[10], keyword_into[10], table_name[20], keyword_values[10];
     int id;
-    char username[COLUMN_USERNAME_SIZE];
-    char email[COLUMN_EMAIL_SIZE];
+    char username[256]; 
+    char email[256];
     
-    int parsed = sscanf(input.c_str(), "%9s %9s %19s %9s (%d, %31[^,], %63[^)])", 
+    int parsed = sscanf(input.c_str(), "%9s %9s %19s %9s (%d, %255[^,], %255[^)])", 
                         keyword_insert, keyword_into, table_name, keyword_values, 
                         &id, username, email);
 
@@ -19,12 +19,16 @@ PrepareResult prepare_insert(const std::string& input, Statement& statement) {
         return PrepareResult::PREPARE_SYNTAX_ERROR;
     }
 
+    if (std::strlen(username) >= COLUMN_USERNAME_SIZE) {
+        return PrepareResult::PREPARE_STRING_TOO_LONG;
+    }
+    if (std::strlen(email) >= COLUMN_EMAIL_SIZE) {
+        return PrepareResult::PREPARE_STRING_TOO_LONG;
+    }
+
     statement.row_to_insert.id = id;
-    std::strncpy(statement.row_to_insert.username, username, COLUMN_USERNAME_SIZE - 1);
-    statement.row_to_insert.username[COLUMN_USERNAME_SIZE - 1] = '\0';
-    
-    std::strncpy(statement.row_to_insert.email, email, COLUMN_EMAIL_SIZE - 1);
-    statement.row_to_insert.email[COLUMN_EMAIL_SIZE - 1] = '\0';
+    std::strcpy(statement.row_to_insert.username, username);
+    std::strcpy(statement.row_to_insert.email, email);
 
     return PrepareResult::PREPARE_SUCCESS;
 }
