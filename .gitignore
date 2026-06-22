@@ -1,0 +1,11 @@
+# Compiled object files and binaries
+*.o
+*.exe
+*.out
+minidb
+db_test
+db_benchmark
+
+# Database state and logs
+*.db
+*.wal
