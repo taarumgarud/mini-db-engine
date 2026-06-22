@@ -1,4 +1,5 @@
 #include "executor.h"
+#include "wal.h"
 #include <cstring>
 #include <iostream>
 
@@ -21,6 +22,7 @@ ExecuteResult execute_insert(Statement* statement, Table* table) {
     }
     
     row_to_insert->is_deleted = 0;
+    wal_append(table, row_to_insert); 
     
     void* destination = row_slot(table, table->num_rows);
     std::memcpy(destination, row_to_insert, ROW_SIZE);
@@ -86,6 +88,8 @@ ExecuteResult execute_delete(Statement* statement, Table* table) {
     }
     
     row.is_deleted = 1;
+    wal_append(table, &row); 
+
     std::memcpy(slot, &row, ROW_SIZE);
     mark_page_dirty(table, row_num / ROWS_PER_PAGE);
     

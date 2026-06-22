@@ -31,6 +31,8 @@ struct Table {
     uint32_t num_rows;
     Pager* pager;
     BTree* index;
+    std::fstream wal_file;
+    std::string wal_filename;
 };
 
 Table* db_open(const std::string& filename);

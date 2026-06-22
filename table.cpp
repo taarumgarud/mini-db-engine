@@ -1,4 +1,5 @@
 #include "table.h"
+#include "wal.h"
 #include <cstdlib>
 #include <cstring>
 
@@ -33,6 +34,10 @@ Table* db_open(const std::string& filename) {
         }
     }
 
+    table->wal_filename = filename + ".wal";
+    wal_replay(table, table->wal_filename);
+    wal_open(table, table->wal_filename);
+
     return table;
 }
 
@@ -55,6 +60,8 @@ void db_close(Table* table) {
     }
 
     pager->file.close();
+    wal_truncate(table, table->wal_filename);
+
     delete pager;
     delete table->index;
     delete table;

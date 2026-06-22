@@ -8,6 +8,39 @@ const std::string TEST_DB = "test.db";
 
 void setup_test_db() {
     std::remove(TEST_DB.c_str());
+    std::remove((TEST_DB + ".wal").c_str());
+}
+
+bool test_crash_recovery() {
+    setup_test_db();
+    Table* table = db_open(TEST_DB);
+
+    Statement insert_stmt;
+    insert_stmt.type = StatementType::STATEMENT_INSERT;
+    insert_stmt.row_to_insert.id = 999;
+    std::strcpy(insert_stmt.row_to_insert.username, "crash_dummy");
+    std::strcpy(insert_stmt.row_to_insert.email, "crash@dtu.ac.in");
+
+    execute_insert(&insert_stmt, table);
+
+    table->pager->file.close();
+    table->wal_file.close();
+
+    Table* recovered_table = db_open(TEST_DB);
+    
+    bool found;
+    uint32_t row_num = btree_search(recovered_table->index, 999, found);
+    ASSERT_TRUE(found);
+
+    void* slot = row_slot(recovered_table, row_num);
+    Row recovered_row;
+    std::memcpy(&recovered_row, slot, ROW_SIZE);
+
+    ASSERT_EQ(recovered_row.id, 999);
+    ASSERT_TRUE(std::strcmp(recovered_row.username, "crash_dummy") == 0);
+
+    db_close(recovered_table);
+    return true;
 }
 
 bool test_insert_and_retrieve() {
@@ -136,6 +169,7 @@ int main() {
     RUN_TEST(test_duplicate_key_constraint);
     RUN_TEST(test_persistence_and_index_rebuild);
     RUN_TEST(test_lru_eviction);
+    RUN_TEST(test_crash_recovery);
     
     std::cout << "-------------------------\n";
     std::remove(TEST_DB.c_str());
