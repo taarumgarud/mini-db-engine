@@ -26,6 +26,7 @@ ExecuteResult execute_insert(Statement* statement, Table* table) {
     std::memcpy(destination, row_to_insert, ROW_SIZE);
     
     btree_insert(table->index, row_to_insert->id, table->num_rows);
+    mark_page_dirty(table, table->num_rows / ROWS_PER_PAGE);
     
     table->num_rows++;
     return ExecuteResult::EXECUTE_SUCCESS;
@@ -86,6 +87,7 @@ ExecuteResult execute_delete(Statement* statement, Table* table) {
     
     row.is_deleted = 1;
     std::memcpy(slot, &row, ROW_SIZE);
+    mark_page_dirty(table, row_num / ROWS_PER_PAGE);
     
     return ExecuteResult::EXECUTE_SUCCESS;
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 
-constexpr uint32_t BTREE_ORDER = 3;
+constexpr uint32_t BTREE_ORDER = 100;
 constexpr uint32_t MAX_KEYS = BTREE_ORDER - 1;
 
 enum class NodeType {

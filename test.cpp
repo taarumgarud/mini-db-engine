@@ -89,12 +89,53 @@ bool test_persistence_and_index_rebuild() {
     return true;
 }
 
+bool test_lru_eviction() {
+    setup_test_db();
+    Table* table = db_open(TEST_DB);
+
+    for (uint32_t i = 1; i <= 170; i++) {
+        Statement insert_stmt;
+        insert_stmt.type = StatementType::STATEMENT_INSERT;
+        insert_stmt.row_to_insert.id = i;
+        std::strcpy(insert_stmt.row_to_insert.username, "user");
+        std::strcpy(insert_stmt.row_to_insert.email, "user@example.com");
+        execute_insert(&insert_stmt, table);
+    }
+
+    ASSERT_EQ(table->num_rows, 170);
+    db_close(table);
+
+    Table* reopened_table = db_open(TEST_DB);
+    ASSERT_EQ(reopened_table->num_rows, 170);
+
+    bool found_first, found_last;
+    uint32_t row_first = btree_search(reopened_table->index, 1, found_first);
+    uint32_t row_last = btree_search(reopened_table->index, 170, found_last);
+
+    ASSERT_TRUE(found_first);
+    ASSERT_TRUE(found_last);
+
+    void* slot_first = row_slot(reopened_table, row_first);
+    Row row_f;
+    std::memcpy(&row_f, slot_first, ROW_SIZE);
+    ASSERT_EQ(row_f.id, 1);
+
+    void* slot_last = row_slot(reopened_table, row_last);
+    Row row_l;
+    std::memcpy(&row_l, slot_last, ROW_SIZE);
+    ASSERT_EQ(row_l.id, 170);
+
+    db_close(reopened_table);
+    return true;
+}
+
 int main() {
     std::cout << "--- MiniDB Test Suite ---\n";
     
     RUN_TEST(test_insert_and_retrieve);
     RUN_TEST(test_duplicate_key_constraint);
     RUN_TEST(test_persistence_and_index_rebuild);
+    RUN_TEST(test_lru_eviction);
     
     std::cout << "-------------------------\n";
     std::remove(TEST_DB.c_str());
